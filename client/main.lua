@@ -26,7 +26,7 @@ local function createExitTarget(sh)
         coords = vec3(sh.iplExitCoords.x, sh.iplExitCoords.y, sh.iplExitCoords.z),
         size = vec3(1.0, 1.0, 2.0),
         rotation = sh.iplExitCoords.w,
-        debug = true,
+        debug = Config.Debug,
         onSelect = function()
             TriggerServerEvent('uc-safehouses:server:exitSafeHouse', sh.id)
         end
@@ -34,6 +34,35 @@ local function createExitTarget(sh)
     CreateBoxTarget(target)
 end
 
+local function createControlLaptopTarget(ent, sh)
+    if Config.Debug then
+        print(('^1[DEBUG] ^7Creating control laptop target for safehouse %s'):format(sh.id))
+    end
+    local options = {
+        name = sh.id .. "_control_laptop",
+        label = "Control Laptop",
+        debug = Config.Debug,
+        onSelect = function()
+            -- Implement laptop interaction here
+            print('Interacted with control laptop for safehouse ' .. sh.id)
+        end
+    }
+    AddLocalEntity(ent, options)
+end
+
+AddStateBagChangeHandler('uc_safehousesSpawnedObj', nil, function(bagName, key, sh, _unused)
+    if type(sh) ~= 'table' then return end
+
+    local ent = GetEntityFromStateBagName(bagName)
+    if ent == 0 or not DoesEntityExist(ent) then return end
+    
+    createControlLaptopTarget(ent, sh)
+    SetEntityHeading(ent, sh.controlLaptopCoords.w)
+    FreezeEntityPosition(ent, true)
+    PlaceObjectOnGroundProperly(ent)
+
+    
+end)
 RegisterNetEvent('uc-safehouses:client:createTargets')
 AddEventHandler('uc-safehouses:client:createTargets', function(sh)
     print(('Creating targets for safehouse %s on client %s'):format(sh.id, source))

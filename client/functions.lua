@@ -29,3 +29,27 @@ function CreateBoxTarget(data)
         }
     })
 end
+
+---@param ent number Entity handle (must exist on THIS client)
+---@param data table
+---@param data.name string|nil Option identifier (used for removal)
+---@param data.label string
+---@param data.icon string|nil
+---@param data.distance number|nil
+---@param data.onSelect fun(targetData: table)|nil
+function AddLocalEntity(ent, data)
+    if not ent or ent == 0 or not DoesEntityExist(ent) then
+        print('[AddLocalEntity] invalid entity', ent)
+        return false
+    end
+
+    return exports.ox_target:addLocalEntity(ent, {
+        {
+            name = (data.name or 'entity') .. '_option',
+            label = data.label,
+            icon = data.icon or 'fas fa-cog',
+            distance = data.distance or 2.0,
+            onSelect = data.onSelect or function(_) end,
+        }
+    })
+end

@@ -1,19 +1,36 @@
 ---@class SafeHouse : OxClass
----@field owner number
+---@field owner string
 ---@field upgrades table<string, table> -- Upgrade name | Upgrade data
 ---@field tier integer
 ---@field id string
 ---@field objects table<string, any>
 ---@field ipl table<vector4, string, number> -- Coords | name | Bucket
+---@field iplExitCoords vector4
+---@field iplEnterCoords vector4
+---@field controlLaptop vector4
+---@field createTargets fun(self: SafeHouse)
+---@field deleteTargets fun(self: SafeHouse)
+---@field hasUpgrade fun(self: SafeHouse, name: string): boolean
+---@field addUpgrade fun(self: SafeHouse, name: string, upgrade: table)
+---@field removeUpgrade fun(self: SafeHouse, name: string)
+---@field upgradeTier fun(self: SafeHouse)
+---@field serialize fun(self: SafeHouse): table
+---@field save fun(self: SafeHouse)
+---@field isPlayerInSafeHouse fun(self: SafeHouse, playerSrc: number): boolean
+---@field playerEnter fun(self: SafeHouse, playerSrc: number)
+---@field playerExit fun(self: SafeHouse, playerSrc: number)
 local SafeHouse = lib.class('SafeHouse')
 
 ---Constructor for SafeHouse
----@param owner number
+---@param owner string
 ---@param upgrades? table<string, table>
 ---@param tier? integer
 ---@param id? string
+---@param iplExitCoords? vector4
+---@param iplEnterCoords? vector4
 ---@param objects? table<string, any>
-function SafeHouse:constructor(owner, upgrades, tier, id, iplExitCoords, iplEnterCoords,  objects)
+---@param controlLaptopCoords? vector4
+function SafeHouse:constructor(owner, upgrades, tier, id, iplExitCoords, iplEnterCoords,  objects, controlLaptopCoords)
     self.owner = owner
     self.id = id or ('safehouse_%s'):format(owner)
     self.upgrades = upgrades or {}
@@ -21,9 +38,11 @@ function SafeHouse:constructor(owner, upgrades, tier, id, iplExitCoords, iplEnte
     self.iplExitCoords = iplExitCoords or vector4(0.0, 0.0, 0.0, 0.0)
     self.iplEnterCoords = iplEnterCoords or vector4(0.0, 0.0, 0.0, 0.0)
     self.objects = objects or {}
+    self.controlLaptopCoords = controlLaptopCoords or vector4(0.0, 0.0, 0.0, 0.0)
     self:createTargets()
+    self:createControlTable()
     if Config.Debug then
-        print(('^1[DEBUG] ^7SafeHouse %s created with owner %d'):format(self.id, self.owner))
+        print(('^1[DEBUG] ^7SafeHouse %s created with owner %s'):format(self.id, self.owner))
     end
 end
 
@@ -109,12 +128,17 @@ function SafeHouse:save()
     return res
 end
 
+function SafeHouse:createControlTable()
+    local obj = CreateObjectNoOffset(Config.ControlLaptop.model, self.controlLaptopCoords.x, self.controlLaptopCoords.y, self.controlLaptopCoords.z, true, false, false)
+    SetEntityRoutingBucket(obj, math.floor(self.iplEnterCoords.x))
+    Entity(obj).state.uc_safehousesSpawnedObj = self
+end
+
 function SafeHouse:createTargets()
     if Config.Debug then
         print(('^1[DEBUG] ^7Creating targets for safehouse %s'):format(self.id))
     end
-    
-    TriggerClientEvent('uc-safehouses:client:createTargets', self.owner, self)
+    TriggerClientEvent('uc-safehouses:client:createTargets', -1, self)
 end
 
 function SafeHouse:deleteTargets()
@@ -165,6 +189,9 @@ function SafeHouse:playerExit(exitingPlayerSrc)
     end
     Wait(500)
     SetPlayerRoutingBucket(exitingPlayerSrc, 0)
+    if Config.Debug then
+        print(('^1[DEBUG] ^7Player %d routing bucket reset to %d'):format(exitingPlayerSrc, GetPlayerRoutingBucket(exitingPlayerSrc)))
+    end
     SetEntityCoords(GetPlayerPed(exitingPlayerSrc), self.iplEnterCoords.x, self.iplEnterCoords.y, self.iplEnterCoords.z, false, false, false, true)
 end
 

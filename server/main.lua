@@ -3,7 +3,11 @@ local SafeHouse = require 'server.SafeHouseClass'
 
 local safeHouses = {}
 Wait(1000)
-local sh = SafeHouse:new(1, nil, 1, 'test_safehouse', vector4(134.89, -2203.47, 7.31, 86), vector4(56.52, -1922.67, 21.91, 143))
+
+local player = exports.qbx_core:GetPlayer(1)
+local playerData = player.PlayerData
+local citizenid = playerData.citizenid
+local sh = SafeHouse:new(citizenid, nil, 1, 'test_safehouse', vector4(134.89, -2203.47, 7.31, 86), vector4(132.39, -2205.39, 7.19, 178),nil,vector4(142.34, -2203.94, 4.69, 348))
 
 sh:removeUpgrade("test")
 sh:addUpgrade('vault', { level = 1, unlocked = true })
@@ -31,6 +35,7 @@ AddEventHandler('onResourceStop', function(resource)
    if resource == GetCurrentResourceName() then
         for _, sh in pairs(safeHouses) do
             sh:deleteTargets()
+            
         end
    end
 end)
