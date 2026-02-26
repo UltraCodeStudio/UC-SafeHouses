@@ -30,7 +30,8 @@ local SafeHouse = lib.class('SafeHouse')
 ---@param iplEnterCoords? vector4
 ---@param objects? table<string, any>
 ---@param controlLaptopCoords? vector4
-function SafeHouse:constructor(owner, upgrades, tier, id, iplExitCoords, iplEnterCoords,  objects, controlLaptopCoords)
+function SafeHouse:constructor(owner, upgrades, tier, id, iplExitCoords, iplEnterCoords,  objects, controlLaptopCoords, safeCoords)
+    Wait(100) 
     self.owner = owner
     self.id = id or ('safehouse_%s'):format(owner)
     self.upgrades = upgrades or {}
@@ -39,8 +40,10 @@ function SafeHouse:constructor(owner, upgrades, tier, id, iplExitCoords, iplEnte
     self.iplEnterCoords = iplEnterCoords or vector4(0.0, 0.0, 0.0, 0.0)
     self.objects = objects or {}
     self.controlLaptopCoords = controlLaptopCoords or vector4(0.0, 0.0, 0.0, 0.0)
+    self.safeCoords = safeCoords or vector4(0.0, 0.0, 0.0, 0.0)
     self:createTargets()
     self:createControlTable()
+    self:createSafe()
     if Config.Debug then
         print(('^1[DEBUG] ^7SafeHouse %s created with owner %s'):format(self.id, self.owner))
     end
@@ -64,6 +67,7 @@ function SafeHouse:addUpgrade(name, upgrade)
         print(('^1[DEBUG] ^7Adding upgrade %s to safehouse %s'):format(name, self.id))
     end
     self.upgrades[name] = upgrade
+    self:save()
 end
 
 ---Remove an upgrade by name
@@ -73,6 +77,7 @@ function SafeHouse:removeUpgrade(name)
         print(('^1[DEBUG] ^7Removing upgrade %s from safehouse %s'):format(name, self.id))
     end
     self.upgrades[name] = nil
+    self:save()
 end
 
 ---Increase the safehouse tier
@@ -98,6 +103,7 @@ function SafeHouse:serialize()
 end
 
 function SafeHouse:save()
+    
     if Config.Debug then
         print(('^1[DEBUG] ^7Saving safehouse %s to database'):format(self.id))
     end
@@ -124,14 +130,63 @@ function SafeHouse:save()
         data.iplExitCoords,
         data.upgrades, data.objects,
     })
-
+    if Config.Debug then
+        print(('^1[DEBUG] ^7Safehouse %s saved to database with result: %s'):format(self.id, json.encode(res)))
+    end
     return res
 end
 
-function SafeHouse:createControlTable()
-    local obj = CreateObjectNoOffset(Config.ControlLaptop.model, self.controlLaptopCoords.x, self.controlLaptopCoords.y, self.controlLaptopCoords.z, true, false, false)
+
+---@param model string
+---@param coords vector4
+---@param payload? table<string, any>
+---@return integer
+function SafeHouse:createObject(model, coords, payload)
+    local obj = CreateObjectNoOffset(model, coords.x, coords.y, coords.z, true, false, false)
     SetEntityRoutingBucket(obj, math.floor(self.iplEnterCoords.x))
-    Entity(obj).state.uc_safehousesSpawnedObj = self
+    payload = payload or {}
+    payload.model = model
+    payload.coords = { x = coords.x, y = coords.y, z = coords.z }
+    payload.id = self.id
+    Entity(obj).state:set('uc_safehousesSpawnedObj', payload, true)
+    self.objects[obj] = coords
+    
+    self:save()
+    return obj
+end
+
+function SafeHouse:deleteObjects()
+    
+    for obj, coords in pairs(self.objects) do
+        if DoesEntityExist(obj) then
+            DeleteEntity(obj)
+        end
+    end
+    self.objects = {}
+end
+
+function SafeHouse:createControlTable()
+    return self:createObject(
+        Config.ControlLaptop.model,
+        self.controlLaptopCoords,
+        {
+            type = "controlLaptop",
+            heading = self.controlLaptopCoords.w
+        }
+    )
+end
+
+function SafeHouse:createSafe()
+    local safeModel = Config.Upgrades.vault[self.tier].model
+    exports.ox_inventory:RegisterStash(self.id .. "_safe", self.id .. "_safe", Config.Upgrades.vault[self.tier].inventorySlots, Config.Upgrades.vault[self.tier].inventoryWeight)
+    return self:createObject(
+        safeModel,
+        self.safeCoords,
+        {
+            type = "safe",
+            heading = self.safeCoords.w
+        }
+    )
 end
 
 function SafeHouse:createTargets()
@@ -152,7 +207,6 @@ function SafeHouse:isPlayerInSafeHouse(playerSrc)
         print(('^1[ERROR] ^7Player %d does not exist checking safehouse %s'):format(playerSrc, self.id))
         return false
     end
-    print(GetPlayerRoutingBucket(playerSrc), math.floor(self.iplEnterCoords.x))
     if GetPlayerRoutingBucket(playerSrc) == math.floor(self.iplEnterCoords.x) then
         if Config.Debug then
             print(('^1[DEBUG] ^7Player %d is in safehouse %s'):format(playerSrc, self.id))
@@ -173,7 +227,6 @@ function SafeHouse:playerEnter(enteredPlayerSrc)
     if Config.Debug then
         print(('^1[DEBUG] ^7Player %d is entering safehouse %s'):format(enteredPlayerSrc, self.id))
     end
-    Wait(500)
     SetPlayerRoutingBucket(enteredPlayerSrc, self.iplEnterCoords.x)
     
     print(('^1[DEBUG] ^7Player %d routing bucket set to %d'):format(enteredPlayerSrc, GetPlayerRoutingBucket(enteredPlayerSrc)))
@@ -187,7 +240,7 @@ function SafeHouse:playerExit(exitingPlayerSrc)
     if Config.Debug then
         print(('^1[DEBUG] ^7Player %d is exiting safehouse %s'):format(exitingPlayerSrc, self.id))
     end
-    Wait(500)
+
     SetPlayerRoutingBucket(exitingPlayerSrc, 0)
     if Config.Debug then
         print(('^1[DEBUG] ^7Player %d routing bucket reset to %d'):format(exitingPlayerSrc, GetPlayerRoutingBucket(exitingPlayerSrc)))

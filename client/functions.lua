@@ -53,3 +53,15 @@ function AddLocalEntity(ent, data)
         }
     })
 end
+
+function ShowMenu(options)
+    lib.registerContext({
+        id = options.id or 'example_menu',
+        title = options.title or 'Example Menu',
+        options = options.elements or {},
+        onSelect = options.onSelect or function(selected, args)
+            print('Selected option:', selected.value)
+        end,
+    })
+    lib.showContext(options.id or 'example_menu')
+end
