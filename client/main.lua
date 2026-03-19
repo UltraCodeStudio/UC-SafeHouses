@@ -16,7 +16,7 @@ local function createEntranceTarget(sh)
         end,
         canInteract = function(entity, distance, coords, name, bone)
             local inside = lib.callback.await('uc-safehouses:server:isPlayerInSafeHouse',true, sh.id)
-            return inside
+            return not inside
         end
     }
     CreateBoxTarget(target)

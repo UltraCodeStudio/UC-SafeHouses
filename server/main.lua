@@ -40,6 +40,12 @@ RegisterNetEvent('uc-safehouses:server:createSafeHouse', function(data)
     end
 end)
 
+RegisterNetEvent('QBCore:Server:OnPlayerLoaded', function()
+    for _, safeHouse in pairs(safeHouses) do
+        safeHouse:createTargets()
+    end
+end)
+
 function LoadSafeHouses()
     local query = [[SELECT * FROM uc_safehouses]]
     local rows = MySQL.query.await(query) or {}

@@ -12,6 +12,7 @@
 ---@param data.onSelect fun(targetData: table)|nil
 ---@return number zoneId
 function CreateBoxTarget(data)
+    exports.ox_target:removeZone(data.name)
     return exports.ox_target:addBoxZone({
         name = data.name,
         coords = data.coords,

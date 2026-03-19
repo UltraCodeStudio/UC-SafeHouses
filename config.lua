@@ -2,7 +2,7 @@ Config = {}
 
 Config.Debug = true
 
-Config.KickPlayersOutOnResourceStop = false
+Config.KickPlayersOutOnResourceStop = true
 
 Config.ControlLaptop = {
     model = 'v_corp_desksetb', 
@@ -18,17 +18,17 @@ Config.Upgrades = {
         description = "A secure vault to store your valuables.",
         [1] = {
             inventorySlots = 10,
-            inventoryWeight = 100.0,
+            inventoryWeight = 10000.0,
             model = 'reh_prop_reh_box_wood01a',
         },
         [2] = {
             inventorySlots = 15,
-            inventoryWeight = 150.0,
+            inventoryWeight = 15000.0,
             model = 'v_med_storage',
         },
         [3] = {
             inventorySlots = 20,
-            inventoryWeight = 200.0,
+            inventoryWeight = 20000.0,
             model = 'xm3_prop_xm3_safe_01a',
         },
     },

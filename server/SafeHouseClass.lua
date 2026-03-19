@@ -267,6 +267,18 @@ function SafeHouse:deleteTargets()
     end
 end
 
+function SafeHouse:isPlayerOwner(playerSrc)
+    
+    local player = exports.qbx_core:GetPlayer(playerSrc)
+    local playerData = player.PlayerData
+    local citizenid = playerData.citizenid
+    print(citizenid, self.owner)
+    if citizenid == self.owner then
+        return true
+    end
+    return false
+end
+
 function SafeHouse:isPlayerInSafeHouse(playerSrc)
     if not DoesPlayerExist(playerSrc) then
         print(('^1[ERROR] ^7Player %d does not exist checking safehouse %s'):format(playerSrc, self.id))
@@ -289,6 +301,11 @@ function SafeHouse:playerEnter(enteredPlayerSrc)
         print(('^1[ERROR] ^7Player %d does not exist trying to enter safehouse %s'):format(enteredPlayerSrc, self.id))
         return
     end
+    
+    if not self:isPlayerOwner(enteredPlayerSrc) then
+        return
+    end
+    
     local ped = GetPlayerPed(enteredPlayerSrc)
     if Config.Debug then
         print(('^1[DEBUG] ^7Player %d is entering safehouse %s'):format(enteredPlayerSrc, self.id))
