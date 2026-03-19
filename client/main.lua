@@ -13,6 +13,10 @@ local function createEntranceTarget(sh)
         debug = Config.Debug,
         onSelect = function()
             TriggerServerEvent('uc-safehouses:server:enterSafeHouse', sh.id)
+        end,
+        canInteract = function(entity, distance, coords, name, bone)
+            local inside = lib.callback.await('uc-safehouses:server:isPlayerInSafeHouse',true, sh.id)
+            return inside
         end
     }
     CreateBoxTarget(target)
@@ -31,6 +35,10 @@ local function createExitTarget(sh)
         debug = Config.Debug,
         onSelect = function()
             TriggerServerEvent('uc-safehouses:server:exitSafeHouse', sh.id)
+        end,
+        canInteract = function(entity, distance, coords, name, bone)
+            local inside = lib.callback.await('uc-safehouses:server:isPlayerInSafeHouse',true, sh.id)
+            return inside
         end
     }
     CreateBoxTarget(target)
@@ -41,15 +49,33 @@ local function createControlLaptopTarget(ent, sh)
         print(('^1[DEBUG] ^7Creating control laptop target for safehouse %s'):format(sh.id))
     end
     local options = {
-        name = sh.id .. "_control_laptop",
-        label = "Control Laptop",
-        debug = Config.Debug,
-        onSelect = function()
-            if Config.Debug then
-                print(('^1[DEBUG] ^7Interacted with control laptop for safehouse %s'):format(sh.id))
+        {
+            name = sh.id .. "_control_laptop",
+            label = "Control Laptop",
+            debug = Config.Debug,
+            onSelect = function()
+                if Config.Debug then
+                    print(('^1[DEBUG] ^7Interacted with control laptop for safehouse %s'):format(sh.id))
+                end
+                ShowLaptopMenu(sh)
             end
-            ShowLaptopMenu(sh)
-        end
+        },
+        {
+            name = sh.id .. '_control_laptop_move',
+            label = 'Move Laptop',
+            icon = 'fas fa-gear',
+            debug = Config.Debug,
+            onSelect = function()
+                if Config.Debug then
+                    print(('^1[DEBUG] ^7Move Laptop selected for safehouse %s'):format(sh.id))
+                end
+                
+                local coords, heading = PlaceProp(Config.ControlLaptop.model)
+                local vec4 = vector4(coords.x,coords.y,coords.z, heading)
+                TriggerServerEvent('uc-safeHouses:server:moveControlTable', sh.id, vec4)
+            end
+        }
+        
     }
     AddLocalEntity(ent, options)
 end
@@ -59,19 +85,35 @@ local function createSafeTarget(ent, sh)
         print(('^1[DEBUG] ^7Creating safe target for safehouse %s'):format(sh.id))
     end
     local options = {
-        name = sh.id .. "_safe",
+       {
+            name = sh.id .. '_safe_open',
+            label = 'Open Safe',
+            icon = 'fas fa-box-open',
+            debug = Config.Debug,
+            onSelect = function()
+                if Config.Debug then
+                    print(('^1[DEBUG] ^7Opened safe for safehouse %s'):format(sh.id))
+                end
 
-        label = "Safe",
-        debug = Config.Debug,
-        onSelect = function()
-            if Config.Debug then
-                print(('^1[DEBUG] ^7Interacted with safe for safehouse %s'):format(sh.id))
+                exports.ox_inventory:openInventory('stash', sh.id .. '_safe')
             end
-            
-            
-            exports.ox_inventory:openInventory('stash', sh.id.."_safe")
-            
-        end
+        },
+        {
+            name = sh.id .. '_safe_move',
+            label = 'Move Safe',
+            icon = 'fas fa-gear',
+            debug = Config.Debug,
+            onSelect = function()
+                if Config.Debug then
+                    print(('^1[DEBUG] ^7Move safe selected for safehouse %s'):format(sh.id))
+                end
+                
+                local coords, heading = PlaceProp(Config.Upgrades.vault[sh.sh.tier].model)
+                local vec4 = vector4(coords.x,coords.y,coords.z, heading)
+                TriggerServerEvent('uc-safeHouses:server:moveSafe', sh.id, vec4)
+            end
+        },
+        
     }
     AddLocalEntity(ent, options)
 end

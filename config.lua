@@ -2,6 +2,8 @@ Config = {}
 
 Config.Debug = true
 
+Config.KickPlayersOutOnResourceStop = false
+
 Config.ControlLaptop = {
     model = 'v_corp_desksetb', 
 }

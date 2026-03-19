@@ -25,6 +25,7 @@ function CreateBoxTarget(data)
                 icon = data.icon or 'fas fa-door-open',
                 distance = data.distance or 2.0,
                 onSelect = data.onSelect or function(_) end,
+                canInteract = data.canInteract or nil,
             }
         }
     })
@@ -43,15 +44,7 @@ function AddLocalEntity(ent, data)
         return false
     end
 
-    return exports.ox_target:addLocalEntity(ent, {
-        {
-            name = (data.name or 'entity') .. '_option',
-            label = data.label,
-            icon = data.icon or 'fas fa-cog',
-            distance = data.distance or 2.0,
-            onSelect = data.onSelect or function(_) end,
-        }
-    })
+    return exports.ox_target:addLocalEntity(ent, data)
 end
 
 function ShowMenu(options)
